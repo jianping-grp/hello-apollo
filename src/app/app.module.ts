@@ -12,7 +12,7 @@ import {ChemblModule} from "./chembl/chembl.module";
 
 const client = new ApolloClient({
   networkInterface: createNetworkInterface({
-    uri: "http://localhost:8000/graphql/"
+    uri: "http://127.0.0.1:8000/graphql/"
   })
 })
 export function provideClient(): ApolloClient {

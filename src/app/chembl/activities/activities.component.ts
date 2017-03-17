@@ -4,13 +4,13 @@ import gql from 'graphql-tag';
 
 const versionInfo = gql`
 query{
-  allversion{
+  allactivities(first: 10){
     edges{
       node{
         id,
-        name,
-        creationDate,
-        comments
+        pchemblValue,
+        activityComment,
+        standardType
       }
     }
   }
@@ -23,7 +23,7 @@ query{
   styleUrls: ['./activities.component.css']
 })
 export class ActivitiesComponent implements OnInit {
-  version: any;
+  data: any;
 
   constructor(private apollo: Apollo) {
   }
@@ -32,9 +32,8 @@ export class ActivitiesComponent implements OnInit {
     this.apollo.watchQuery({
       query: versionInfo
     }).subscribe(({data}) => {
-      this.version = data
+      this.data = data;
     })
-    console.log(this.version)
   }
 
 }

@@ -1,3 +1,11 @@
 <p>
   activities works!
 </p>
+<div *ngIf="data">
+  <ul>
+    <li *ngFor="let act of data.allactivities.edges">
+      {{act.node.pchemblValue}}
+
+    </li>
+  </ul>
+</div>
