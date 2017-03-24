@@ -2,10 +2,19 @@
   activities works!
 </p>
 <div *ngIf="data">
-  <ul>
-    <li *ngFor="let act of data.allactivities.edges">
-      {{act.node.pchemblValue}}
-
-    </li>
-  </ul>
+  <table>
+    <thead>
+    <th>molregno</th>
+    <th>prodrug</th>
+    <th>maxPhase</th>
+    <th></th>
+    </thead>
+    <tbody>
+    <tr *ngFor="let mol of data.allmoleculedictionary.edges">
+      <td>{{mol.node.molregno}}</td>
+      <td>{{mol.node.prodrug}}</td>
+      <td>{{mol.node.maxPhase}}</td>
+    </tr>
+    </tbody>
+  </table>
 </div>
