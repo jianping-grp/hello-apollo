@@ -60,58 +60,47 @@ const moreActivities = gql`
   styleUrls: ['./activities.component.css']
 })
 export class ActivitiesComponent implements OnInit {
-  data: any;
-  pageList: Array<{ string, number }>;
+  cachedData: any;
+  pageList: Array<{ cursor: string, pageNum: number }>;
   currentPage: number;
   dataObs: ApolloQueryObservable<any>;
   currentPageNum: number;
+  currentItems: Array<any>;
   currentEndCursor: string;
   currentStartCursor: string;
   itemsPerPage: number;
   pageLimitation: number;
+  cachedItemList: Array<any>;
 
 
   constructor(private apollo: Apollo) {
   }
 
-  private pagination() {
-
-    if(this.currentPageNum === 0){
-      let i = 0;
-      for(i=0; i<this.pageLimitation; i++){
-        this.apollo.watchQuery({
-          query: pageListGQL,
-          variables: {
-            cursor: null,
-            num: this.itemsPerPage
-          }
-        }).subscribe()
-      }
-    }
-  }
-
-  gotoPage(cursor: string, num: number) {
-    this.apollo.watchQuery({
-      query: moleculeDcitionaryGQL,
-      variables: {cursor: cursor, num: num}
-    }).subscribe(({data}) => this.data = data);
-    this.currentPage
-  }
-
-  ngOnInit() {
+  getData(after: string=null, before: string=null, first: number=null, last: number=null){
     this.apollo.watchQuery({
       query: moleculeDcitionaryGQL,
       variables: {
-        cursor: null,
-        num: 10
+        after: after,
+        before: before,
+        first: first,
+        last: last
       }
-    }).subscribe(({data}) => this.data = data);
-    console.log(this.data)
+    }).subscribe(({data}) => this.cachedData = data)
+  }
+
+  gotoPage(cursor: string, num: number) {
+
+  }
+
+  ngOnInit() {
     this.currentPage = 0;
     this.currentEndCursor = null;
     this.currentStartCursor = null;
     this.itemsPerPage = 10;
     this.pageLimitation = 10;
+    this.pageList = [];
+    this.getData(this.currentStartCursor,)
+
   }
 
 }
