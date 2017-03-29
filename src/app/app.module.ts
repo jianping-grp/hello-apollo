@@ -9,7 +9,6 @@ import {ApolloModule} from 'apollo-angular';
 
 import {AppComponent} from './app.component';
 import {ChemblModule} from "./chembl/chembl.module";
-import {ShareModule} from "./share/share.module";
 
 const client = new ApolloClient({
   networkInterface: createNetworkInterface({
@@ -29,8 +28,7 @@ export function provideClient(): ApolloClient {
     FormsModule,
     HttpModule,
     ApolloModule.forRoot(provideClient),
-    ChemblModule,
-    ShareModule
+    ChemblModule
   ],
   providers: [],
   bootstrap: [AppComponent]
