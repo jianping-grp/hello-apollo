@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {Apollo, ApolloQueryObservable} from 'apollo-angular';
 import gql from 'graphql-tag';
-import * as _ from '@types/lodash';
+import * as _ from 'lodash';
 
 const moleculeDcitionaryGQL = gql`
 query allmoleculedictionary($after: String, $before: String, $first: Int, $last: Int) {
@@ -63,7 +63,7 @@ const moreActivities = gql`
 export class ActivitiesComponent implements OnInit {
   cachedData: any;
   pageNumList: Array<number>;
-  currentPage: number;
+  currentPage: number = 0;
   dataObs: ApolloQueryObservable<any>;
   currentPageNum: number;
   currentItems: Array<any>;
@@ -75,7 +75,8 @@ export class ActivitiesComponent implements OnInit {
   pageInfo: any;
   hasPrevious: boolean;
   hasNext: boolean;
-
+  totalItems: number = 200;
+  maxSize = 10;
 
   constructor(private apollo: Apollo) {
   }
@@ -91,7 +92,7 @@ export class ActivitiesComponent implements OnInit {
       }
     }).subscribe(({data}) => {
         this.cachedItemList = data['allmoleculedictionary']['edges'];
-        this.pageInfo = data['allmoleculedictionary']['pageInfo']
+        //this.pageInfo = data['allmoleculedictionary']['pageInfo']
       }
     )
   }
@@ -99,33 +100,38 @@ export class ActivitiesComponent implements OnInit {
   gotoPage(cursor: string, num: number) {
 
   }
-
-  pagination() {
-    if (this.pageNumList === []) {
-      let numOfPage = _.ceil(this.cachedItemList.length / this.itemsPerPage);
-      this.pageNumList = _.range(numOfPage);
-    }
-    else{
-      if(this.pageNumList.indexOf(this.currentPageNum) < 3){
-        //todo calculate the number with itemPerPage and pageLimitation
-        if(this.pageInfo.hasPreviousPage){
-
-        }
-      }
-
-    }
+  public setPage(pageNo: number):void{
+    this.currentPage = pageNo;
   }
+  public pageChanged(event: any){
+
+  }
+  // pagination() {
+  //   if (this.pageNumList === []) {
+  //     let numOfPage = _.ceil(this.cachedItemList.length / this.itemsPerPage);
+  //     this.pageNumList = _.range(numOfPage);
+  //   }
+  //   else{
+  //     if(this.pageNumList.indexOf(this.currentPageNum) < 3){
+  //       //todo calculate the number with itemPerPage and pageLimitation
+  //       if(this.pageInfo.hasPreviousPage){
+  //
+  //       }
+  //     }
+  //
+  //   }
+  // }
 
   ngOnInit() {
-    this.currentPage = 0;
-    this.currentEndCursor = null;
-    this.currentStartCursor = null;
-    this.itemsPerPage = 10;
-    this.pageLimitation = 10;
-    this.pageNumList = [];
-    this.getData(this.currentStartCursor, null, this.pageLimitation * this.itemsPerPage, null)
-    this.hasNext = this.cachedData['pageInfo'].hasNextPage;
-    this.hasPrevious = false
+    // this.currentPage = 0;
+    // this.currentEndCursor = null;
+    // this.currentStartCursor = null;
+    // this.itemsPerPage = 10;
+    // this.pageLimitation = 5;
+    // this.pageNumList = [];
+    // //this.getData(this.currentStartCursor, null, this.pageLimitation * this.itemsPerPage, null)
+    // //this.hasNext = this.cachedData['pageInfo'].hasNextPage;
+    // this.hasPrevious = false
 
   }
 
