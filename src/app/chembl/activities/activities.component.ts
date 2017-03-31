@@ -1,55 +1,29 @@
 import {Component, OnInit} from '@angular/core';
 import {Apollo, ApolloQueryObservable} from 'apollo-angular';
 import gql from 'graphql-tag';
-import * as _ from 'lodash';
 
-const moleculeDcitionaryGQL = gql`
-query allmoleculedictionary($after: String, $before: String, $first: Int, $last: Int) {
-  allmoleculedictionary(after: $after, before: $before, first: $first, last: $last) {
-    edges {
-      cursor
-      node {
-        id
-        molregno
-        prefName
-        oral
-        moleculeType
-        naturalProduct
-        maxPhase
-        prodrug
-      }
-    }
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-      startCursor
-      endCursor
-    }
-  }
-}
-`
-const pageListGQL = gql`
-query allmoleculedictionary($cursor: String, $num: Int) {
-  allmoleculedictionary(first: $num, after: $cursor) {
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-      startCursor
-      endCursor
-    }
-  }
-}
-`
-const moreActivities = gql`
-  query activities($cursor: String){
-    moreActivities(cursor: $cursor){
+const activitesGQL = gql`
+  query allactivities($after: String, $first: Int, $before: String, $last: Int){
+    allactivities(after: $after, first: $first, before: $before, last: $last){
       edges{
         cursor
         node{
-          id,
-          pchemblValue,
-          activitiesComment
+          activityId
+          pchemblValue
+          standardFlag
+          standardType
+          standardValue
+          standardUnits
+          molregno{
+            molregno
+          }
         }
+      }
+      pageInfo{
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
       }
     }
   }
@@ -61,78 +35,83 @@ const moreActivities = gql`
   styleUrls: ['./activities.component.css']
 })
 export class ActivitiesComponent implements OnInit {
-  cachedData: any;
-  pageNumList: Array<number>;
-  currentPage: number = 0;
-  dataObs: ApolloQueryObservable<any>;
-  currentPageNum: number;
-  currentItems: Array<any>;
-  currentEndCursor: string;
-  currentStartCursor: string;
-  itemsPerPage: number;
-  pageLimitation: number;
-  cachedItemList: Array<any>;
-  pageInfo: any;
-  hasPrevious: boolean;
-  hasNext: boolean;
-  totalItems: number = 200;
-  maxSize = 10;
+
+  activitesObs: ApolloQueryObservable<any>;
+  itemsPrePage: number = 10;
+  pageLimite: number = 10;
+  currentPageNum: number = 1;
+  cachedList: any; // full cached item list
+  currentList: Array<any>; //items to show in current page
+  pageInfo: any;  //page info obj that hold: hasNextPage, hasPreviousPage, endCursor, startCursor
+  loading: boolean = true;
 
   constructor(private apollo: Apollo) {
   }
 
-  getData(after: string = null, before: string = null, first: number = null, last: number = null) {
-    this.apollo.watchQuery({
-      query: moleculeDcitionaryGQL,
-      variables: {
-        after: after,
-        before: before,
-        first: first,
-        last: last
-      }
-    }).subscribe(({data}) => {
-        this.cachedItemList = data['allmoleculedictionary']['edges'];
-        //this.pageInfo = data['allmoleculedictionary']['pageInfo']
-      }
-    )
+
+  public pageChanged(event: any) {
+    console.log('changed to page ' + event.page)
+    this.currentPageNum = event.page;
+    this.setCurrentList();
+
+    //fire fetch more if there are more items (hasNextPage in pageInfo is true)
+    if ((
+      this.currentPageNum + 3) * this.itemsPrePage >= this.cachedList.length
+      && this.pageInfo.hasNextPage
+    ) {
+      this.fetchMore()
+    }
   }
 
-  gotoPage(cursor: string, num: number) {
-
+  private  setCurrentList() {
+    if (this.currentPageNum * this.itemsPrePage >= this.cachedList.length) {
+      this.currentList = this.cachedList.slice((this.currentPageNum - 1) * this.itemsPrePage);
+    }
+    else {
+      this.currentList = this.cachedList.slice(
+        (this.currentPageNum - 1) * this.itemsPrePage,
+        this.currentPageNum * this.itemsPrePage
+      )
+    }
   }
-  public setPage(pageNo: number):void{
-    this.currentPage = pageNo;
-  }
-  public pageChanged(event: any){
-
-  }
-  // pagination() {
-  //   if (this.pageNumList === []) {
-  //     let numOfPage = _.ceil(this.cachedItemList.length / this.itemsPerPage);
-  //     this.pageNumList = _.range(numOfPage);
-  //   }
-  //   else{
-  //     if(this.pageNumList.indexOf(this.currentPageNum) < 3){
-  //       //todo calculate the number with itemPerPage and pageLimitation
-  //       if(this.pageInfo.hasPreviousPage){
-  //
-  //       }
-  //     }
-  //
-  //   }
-  // }
 
   ngOnInit() {
-    // this.currentPage = 0;
-    // this.currentEndCursor = null;
-    // this.currentStartCursor = null;
-    // this.itemsPerPage = 10;
-    // this.pageLimitation = 5;
-    // this.pageNumList = [];
-    // //this.getData(this.currentStartCursor, null, this.pageLimitation * this.itemsPerPage, null)
-    // //this.hasNext = this.cachedData['pageInfo'].hasNextPage;
-    // this.hasPrevious = false
+    this.activitesObs = this.apollo.watchQuery({
+      query: activitesGQL,
+      variables: {
+        after: null,
+        first: 100,
+        before: null,
+        last: null,
+      }
+    });
 
+    this.activitesObs.subscribe(({data, loading}) => {
+      console.log('table initialized.')
+      this.cachedList = data['allactivities'].edges;
+      this.pageInfo = data['allactivities'].pageInfo;
+      this.loading = loading;
+      this.setCurrentList();
+    })
+
+  }
+
+  fetchMore() {
+    this.activitesObs.fetchMore({
+      variables: {
+        after: null,
+        first: 100,
+      },
+      updateQuery: (prev, {fetchMoreResult}) => {
+        if (!fetchMoreResult) {
+          return prev
+        }
+        console.log('fetch more fired!')
+        this.pageInfo = fetchMoreResult['allactivities'].pageInfo;
+        this.cachedList.concat(fetchMoreResult['allactivities'].edges)
+
+      }
+    })
   }
 
 }
