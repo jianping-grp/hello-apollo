@@ -36,7 +36,7 @@ const activitesGQL = gql`
 })
 export class ActivitiesComponent implements OnInit {
 
-  activitesObs: ApolloQueryObservable<any>;
+  activitesObs$: ApolloQueryObservable<any>;
   itemsPrePage: number = 10;
   pageLimite: number = 10;
   currentPageNum: number = 1;
@@ -50,19 +50,25 @@ export class ActivitiesComponent implements OnInit {
 
 
   public pageChanged(event: any) {
+    let cachesPageNum = Math.ceil(this.cachedList.length / this.itemsPrePage)
+    console.log('has next page: ' + this.pageInfo.hasNextPage)
+    if (event.page <= cachesPageNum - 2) {
+      //do not need to prefetch more data
+      this.setCurrentList();
+    }
+    else {
+      this.fetchMore();
+      this.activitesObs$.subscribe(() => {
+        console.log('fetch more done!');
+        this.setCurrentList();
+      })
+
+    }
     console.log('changed to page ' + event.page)
     this.currentPageNum = event.page;
-    this.setCurrentList();
-
-    //fire fetch more if there are more items (hasNextPage in pageInfo is true)
-    if ((
-      this.currentPageNum + 3) * this.itemsPrePage >= this.cachedList.length
-      && this.pageInfo.hasNextPage
-    ) {
-      this.fetchMore()
-    }
   }
 
+  // get items to show on page form cached list based current page number.
   private  setCurrentList() {
     if (this.currentPageNum * this.itemsPrePage >= this.cachedList.length) {
       this.currentList = this.cachedList.slice((this.currentPageNum - 1) * this.itemsPrePage);
@@ -76,7 +82,7 @@ export class ActivitiesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.activitesObs = this.apollo.watchQuery({
+    this.activitesObs$ = this.apollo.watchQuery({
       query: activitesGQL,
       variables: {
         after: null,
@@ -86,7 +92,7 @@ export class ActivitiesComponent implements OnInit {
       }
     });
 
-    this.activitesObs.subscribe(({data, loading}) => {
+    this.activitesObs$.subscribe(({data, loading}) => {
       console.log('table initialized.')
       this.cachedList = data['allactivities'].edges;
       this.pageInfo = data['allactivities'].pageInfo;
@@ -97,9 +103,9 @@ export class ActivitiesComponent implements OnInit {
   }
 
   fetchMore() {
-    this.activitesObs.fetchMore({
+    this.activitesObs$.fetchMore({
       variables: {
-        after: null,
+        after: this.pageInfo.endCursor,
         first: 100,
       },
       updateQuery: (prev, {fetchMoreResult}) => {
@@ -108,7 +114,9 @@ export class ActivitiesComponent implements OnInit {
         }
         console.log('fetch more fired!')
         this.pageInfo = fetchMoreResult['allactivities'].pageInfo;
-        this.cachedList.concat(fetchMoreResult['allactivities'].edges)
+        this.cachedList = this.cachedList.concat(fetchMoreResult['allactivities'].edges)
+        console.log('current cached list is: ' + this.cachedList.length)
+        this.setCurrentList()
 
       }
     })
