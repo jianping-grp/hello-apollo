@@ -4,6 +4,7 @@ import { ActivitiesComponent } from './activities/activities.component';
 import {PaginationModule} from "ng2-bootstrap";
 import {FormsModule} from "@angular/forms";
 import {ShareModule} from "../share/share.module";
+import { TargetComponent } from './target/target.component';
 
 @NgModule({
   imports: [
@@ -12,7 +13,7 @@ import {ShareModule} from "../share/share.module";
     ShareModule,
     PaginationModule.forRoot()
   ],
-  declarations: [ActivitiesComponent],
+  declarations: [ActivitiesComponent, TargetComponent],
   exports: [
     ActivitiesComponent
   ]

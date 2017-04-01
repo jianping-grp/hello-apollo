@@ -28,7 +28,7 @@ export abstract class Pagination {
   public pageChanged(event: any) {
     let cachesPageNum = Math.ceil(this.cachedList.length / this.itemsPerPage)
     console.log('has next page: ' + this.pageInfo.hasNextPage)
-    if (event.page <= cachesPageNum - 2) {
+    if (event.page <= cachesPageNum - 4) {
       //do not need to prefetch more data
       this.setCurrentList();
     }
