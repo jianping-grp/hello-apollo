@@ -1,6 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {Apollo, ApolloQueryObservable} from 'apollo-angular';
 import gql from 'graphql-tag';
+import {Pagination} from "../../share/pagination";
+
 
 const activitesGQL = gql`
   query allactivities($after: String, $first: Int, $before: String, $last: Int){
@@ -34,55 +36,14 @@ const activitesGQL = gql`
   templateUrl: './activities.component.html',
   styleUrls: ['./activities.component.css']
 })
-export class ActivitiesComponent implements OnInit {
-
-  activitesObs$: ApolloQueryObservable<any>;
-  itemsPrePage: number = 10;
-  pageLimite: number = 10;
-  currentPageNum: number = 1;
-  cachedList: any; // full cached item list
-  currentList: Array<any>; //items to show in current page
-  pageInfo: any;  //page info obj that hold: hasNextPage, hasPreviousPage, endCursor, startCursor
-  loading: boolean = true;
+export class ActivitiesComponent extends Pagination implements OnInit {
 
   constructor(private apollo: Apollo) {
-  }
-
-
-  public pageChanged(event: any) {
-    let cachesPageNum = Math.ceil(this.cachedList.length / this.itemsPrePage)
-    console.log('has next page: ' + this.pageInfo.hasNextPage)
-    if (event.page <= cachesPageNum - 2) {
-      //do not need to prefetch more data
-      this.setCurrentList();
-    }
-    else {
-      this.fetchMore();
-      this.activitesObs$.subscribe(() => {
-        console.log('fetch more done!');
-        this.setCurrentList();
-      })
-
-    }
-    console.log('changed to page ' + event.page)
-    this.currentPageNum = event.page;
-  }
-
-  // get items to show on page form cached list based current page number.
-  private  setCurrentList() {
-    if (this.currentPageNum * this.itemsPrePage >= this.cachedList.length) {
-      this.currentList = this.cachedList.slice((this.currentPageNum - 1) * this.itemsPrePage);
-    }
-    else {
-      this.currentList = this.cachedList.slice(
-        (this.currentPageNum - 1) * this.itemsPrePage,
-        this.currentPageNum * this.itemsPrePage
-      )
-    }
+    super()
   }
 
   ngOnInit() {
-    this.activitesObs$ = this.apollo.watchQuery({
+    this.obs$ = this.apollo.watchQuery({
       query: activitesGQL,
       variables: {
         after: null,
@@ -92,7 +53,7 @@ export class ActivitiesComponent implements OnInit {
       }
     });
 
-    this.activitesObs$.subscribe(({data, loading}) => {
+    this.obs$.subscribe(({data, loading}) => {
       console.log('table initialized.')
       this.cachedList = data['allactivities'].edges;
       this.pageInfo = data['allactivities'].pageInfo;
@@ -103,7 +64,7 @@ export class ActivitiesComponent implements OnInit {
   }
 
   fetchMore() {
-    this.activitesObs$.fetchMore({
+    this.obs$.fetchMore({
       variables: {
         after: this.pageInfo.endCursor,
         first: 100,
